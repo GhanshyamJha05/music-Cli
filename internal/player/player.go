@@ -286,6 +286,66 @@ func (p *Player) GetVolume() float64 {
 	return p.volume
 }
 
+// Seek jumps forward or backward by the given duration.
+// Positive duration = forward, negative = backward.
+func (p *Player) Seek(d time.Duration) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.streamer == nil || p.state == StateStopped {
+		return
+	}
+
+	// Calculate current position in samples
+	rate := p.currentRate
+	if rate == 0 {
+		return
+	}
+
+	currentPos := p.Elapsed()
+	newPos := currentPos + d
+	if newPos < 0 {
+		newPos = 0
+	}
+
+	samplePos := rate.N(newPos)
+	speaker.Lock()
+	err := p.streamer.Seek(samplePos)
+	if err == nil {
+		// Update pausedAt so Elapsed() returns the correct position
+		p.pausedAt = newPos
+		if p.state == StatePlaying {
+			p.started = time.Now()
+		}
+	}
+	speaker.Unlock()
+}
+
+// SeekTo jumps to an absolute position in the track.
+func (p *Player) SeekTo(pos time.Duration) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.streamer == nil || p.state == StateStopped {
+		return
+	}
+	rate := p.currentRate
+	if rate == 0 {
+		return
+	}
+	if pos < 0 {
+		pos = 0
+	}
+	samplePos := rate.N(pos)
+	speaker.Lock()
+	err := p.streamer.Seek(samplePos)
+	if err == nil {
+		p.pausedAt = pos
+		if p.state == StatePlaying {
+			p.started = time.Now()
+		}
+	}
+	speaker.Unlock()
+}
+
 // PlayTempFile plays a local file and schedules its deletion after playback.
 func (p *Player) PlayTempFile(path string) error {
 	p.mu.Lock()

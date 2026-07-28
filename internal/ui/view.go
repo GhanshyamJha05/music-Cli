@@ -240,6 +240,13 @@ func (a *App) viewNowPlaying() string {
 	b.WriteString(titleStyle.Render("♫  Now Playing") + "\n\n")
 
 	if a.nowPlayingSong == nil {
+		if a.onlineLoading {
+			spinner := lipgloss.NewStyle().Foreground(green).Bold(true).Render("⠋ ")
+			b.WriteString("\n  " + spinner + warningStyle.Render("Re-downloading track via yt-dlp...") + "\n")
+			b.WriteString(dimItemStyle.Render("  This takes a few seconds") + "\n")
+			b.WriteString("\n" + renderHints([]hint{{"esc", "cancel"}}))
+			return b.String()
+		}
 		b.WriteString(dimItemStyle.Render("  Nothing playing.") + "\n")
 		b.WriteString(renderHints([]hint{{"h", "back"}, {"l", "library"}}))
 		return b.String()
@@ -303,7 +310,8 @@ func (a *App) viewNowPlaying() string {
 
 	b.WriteString(renderHints([]hint{
 		{"space/p", "pause"}, {"s", "stop"}, {">", "next"},
-		{"<", "prev"}, {"+/-", "volume"}, {"l", "library"}, {"h", "back"},
+		{"<", "prev"}, {"←/→", "seek"}, {"+/-", "volume"},
+		{"l", "library"}, {"h", "back"},
 	}))
 	return b.String()
 }

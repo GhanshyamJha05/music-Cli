@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -35,6 +36,13 @@ type recResultsMsg struct {
 // songFinishedMsg is sent by the player's OnFinish callback
 type songFinishedMsg struct{}
 
+// savedTrackReadyMsg signals a saved online track has been re-downloaded
+type savedTrackReadyMsg struct {
+	tempPath string
+	song     library.Song
+	err      error
+}
+
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
@@ -55,6 +63,22 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, cmd
 		}
 		return a, nil
+
+	case savedTrackReadyMsg:
+		a.onlineLoading = false
+		a.recLoading = false
+		if msg.err != nil {
+			return a, a.setStatus("Download error: "+msg.err.Error(), true)
+		}
+		if err := a.pl.PlayTempFile(msg.tempPath); err != nil {
+			return a, a.setStatus("Playback error: "+err.Error(), true)
+		}
+		s := msg.song
+		a.nowPlayingSong = &s
+		a.queueSongs = []library.Song{s}
+		a.queueIndex = 0
+		a.screen = ScreenNowPlaying
+		return a, tickCmd()
 
 	case tea.WindowSizeMsg:
 		a.width = msg.Width
@@ -412,6 +436,10 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		a.pl.VolumeUp()
 	case "minus":
 		a.pl.VolumeDown()
+	case "left":
+		a.pl.Seek(-10 * time.Second)
+	case "right":
+		a.pl.Seek(10 * time.Second)
 	case "esc", "h":
 		// go back — never recurse into NowPlaying
 		back := a.prevScreen
@@ -569,6 +597,16 @@ func (a *App) playCurrent() tea.Cmd {
 		return nil
 	}
 	song := a.queueSongs[a.queueIndex]
+
+	// Detect if this is a saved online track (URL instead of local file)
+	if isURL(song.FilePath) {
+		a.onlineLoading = true
+		s := song
+		return func() tea.Msg {
+			return reDownloadSavedTrack(s)
+		}
+	}
+
 	if err := validateAudioPath(song.FilePath); err != nil {
 		return a.setStatus("Invalid file: "+err.Error(), true)
 	}
@@ -580,6 +618,21 @@ func (a *App) playCurrent() tea.Cmd {
 	cp := song
 	a.nowPlayingSong = &cp
 	return tickCmd()
+}
+
+// isURL checks if a path is a web URL
+func isURL(path string) bool {
+	lower := strings.ToLower(path)
+	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
+}
+
+// reDownloadSavedTrack downloads a saved online track via yt-dlp
+func reDownloadSavedTrack(song library.Song) savedTrackReadyMsg {
+	path, err := online.YtdlpDownloadTemp(song.FilePath)
+	if err != nil {
+		return savedTrackReadyMsg{err: err}
+	}
+	return savedTrackReadyMsg{tempPath: path, song: song}
 }
 
 // validateAudioPath checks that a file path is a local file with a valid
