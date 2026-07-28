@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/GhanshyamJha05/music-Cli/internal/library"
 	"github.com/GhanshyamJha05/music-Cli/internal/online"
 	"os"
@@ -608,7 +609,9 @@ func (a *App) playCurrent() tea.Cmd {
 	}
 
 	if err := validateAudioPath(song.FilePath); err != nil {
-		return a.setStatus("Invalid file: "+err.Error(), true)
+		cmd := a.setStatus("Cannot play '"+song.Title+"': "+err.Error(), true)
+		a.nowPlayingSong = nil
+		return cmd
 	}
 	if err := a.pl.Play(song.FilePath); err != nil {
 		cmd := a.setStatus("Playback error: "+err.Error(), true)
@@ -636,23 +639,27 @@ func reDownloadSavedTrack(song library.Song) savedTrackReadyMsg {
 }
 
 // validateAudioPath checks that a file path is a local file with a valid
-// audio extension. Rejects network paths, URLs, and missing files.
+// audio extension. Returns a specific, user-friendly error for each case.
 func validateAudioPath(path string) error {
 	// Reject URLs and network paths
 	lower := strings.ToLower(path)
 	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") ||
 		strings.HasPrefix(lower, "\\\\") || strings.HasPrefix(lower, "//") ||
 		strings.Contains(lower, "://") {
-		return &os.PathError{Op: "open", Path: path, Err: os.ErrInvalid}
+		return fmt.Errorf("URL path — use Online Browse to play streams")
 	}
 	// Check extension
 	validExt := map[string]bool{".mp3": true, ".wav": true, ".flac": true}
-	if !validExt[filepath.Ext(lower)] {
-		return &os.PathError{Op: "open", Path: path, Err: os.ErrInvalid}
+	ext := filepath.Ext(lower)
+	if !validExt[ext] {
+		return fmt.Errorf("unsupported format '%s' (need .mp3, .wav, or .flac)", ext)
 	}
 	// Check file exists
 	if _, err := os.Stat(path); err != nil {
-		return err
+		if os.IsNotExist(err) {
+			return fmt.Errorf("file not found — was it moved or deleted?")
+		}
+		return fmt.Errorf("cannot access file: %w", err)
 	}
 	return nil
 }

@@ -223,12 +223,13 @@ func YtdlpDownloadTemp(webpageURL string) (string, error) {
 
 // CleanCache removes cached files older than 7 days.
 // It respects the provided context for cancellation/timeout.
+// Skips files that are locked or permission-denied (common on Windows).
 func CleanCache(ctx context.Context) {
 	home, _ := os.UserHomeDir()
-	cacheDir := filepath.Join(home, ".github.com/GhanshyamJha05/music-Cli", "cache")
+	cacheDir := filepath.Join(home, ".music-Cli", "cache")
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
-		return
+		return // dir doesn't exist or can't be read — nothing to do
 	}
 	cutoff := time.Now().Add(-7 * 24 * time.Hour)
 	for _, e := range entries {
@@ -242,10 +243,15 @@ func CleanCache(ctx context.Context) {
 		}
 		info, err := e.Info()
 		if err != nil {
-			continue
+			continue // can't stat — skip
 		}
 		if info.ModTime().Before(cutoff) {
-			_ = os.Remove(filepath.Join(cacheDir, e.Name()))
+			path := filepath.Join(cacheDir, e.Name())
+			// Retry once after a short delay (handles Windows file locks)
+			if err := os.Remove(path); err != nil {
+				time.Sleep(100 * time.Millisecond)
+				os.Remove(path) // best-effort second attempt
+			}
 		}
 	}
 }

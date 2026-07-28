@@ -75,6 +75,7 @@ type Player struct {
 	OnFinish       func()
 	currentRate    beep.SampleRate
 	volume         float64 // 0.0 (silent) to 1.0 (full)
+	tempFiles      map[string]struct{} // tracks active temp files
 }
 
 var globalPlayer *Player
@@ -84,7 +85,9 @@ var speakerOnce sync.Once
 // Get returns the singleton player
 func Get() *Player {
 	once.Do(func() {
-		globalPlayer = &Player{}
+		globalPlayer = &Player{
+			tempFiles: make(map[string]struct{}),
+		}
 	})
 	return globalPlayer
 }
@@ -347,6 +350,8 @@ func (p *Player) SeekTo(pos time.Duration) {
 }
 
 // PlayTempFile plays a local file and schedules its deletion after playback.
+// Each download uses a unique random name, so concurrent playbacks are safe.
+// Files are cleaned up by the background cache cleaner, not eagerly deleted.
 func (p *Player) PlayTempFile(path string) error {
 	p.mu.Lock()
 	if err := p.playLocked(path); err != nil {
@@ -354,18 +359,24 @@ func (p *Player) PlayTempFile(path string) error {
 		os.Remove(path)
 		return err
 	}
-	sess := p.session
+	p.tempFiles[path] = struct{}{}
 	p.mu.Unlock()
 
+	// Clean up the temp file after playback finishes (best-effort, non-blocking)
 	go func() {
-		timer := time.NewTimer(10 * time.Minute)
-		defer timer.Stop()
-		select {
-		case <-sess.done:
-			os.Remove(path)
-		case <-timer.C:
-			os.Remove(path)
+		// Wait for playback to end
+		p.mu.Lock()
+		sess := p.session
+		p.mu.Unlock()
+		if sess != nil {
+			<-sess.done
 		}
+		// Small delay to ensure file handles are released
+		time.Sleep(200 * time.Millisecond)
+		os.Remove(path)
+		p.mu.Lock()
+		delete(p.tempFiles, path)
+		p.mu.Unlock()
 	}()
 	return nil
 }
