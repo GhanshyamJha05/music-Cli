@@ -25,7 +25,7 @@ A terminal-based music player with a Spotify-inspired interface. Manage your loc
 
 ### Option 1: Download Binary (Recommended)
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/YOUR_USERNAME/spotifycli/releases).
+Download the latest release for your platform from [GitHub Releases](https://github.com/GhanshyamJha05/spotifycli/releases).
 
 | Platform | File |
 |----------|------|
@@ -38,7 +38,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/spotifycli.git
+git clone https://github.com/GhanshyamJha05/spotifycli.git
 cd spotifycli
 
 # Build
@@ -51,7 +51,7 @@ go build -o spotifycli .
 ### Option 3: Install with Go
 
 ```bash
-go install github.com/YOUR_USERNAME/spotifycli@latest
+go install github.com/GhanshyamJha05/spotifycli@latest
 ```
 
 ---
