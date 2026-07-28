@@ -1,6 +1,6 @@
-# SpotifyCLI
+# music-Cli
 
-A terminal-based music player with a Spotify-inspired interface. Manage your local music library, create playlists, search YouTube, and stream music — all from the command line.
+A terminal-based music player with a clean, modern interface. Manage your local music library, create playlists, search YouTube, and stream music — all from the command line.
 
 ![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green)
@@ -16,7 +16,7 @@ A terminal-based music player with a Spotify-inspired interface. Manage your loc
 - **Genre Recommendations** — Browse curated picks across 12+ genres
 - **Volume Control** — Adjustable volume with visual indicator
 - **Auto-Duration** — Song length detected automatically from file
-- **Rich TUI** — Beautiful terminal interface with Spotify-green theme
+- **Rich TUI** — Beautiful terminal interface with color theme
 - **Persistent Data** — Library saved to disk, survives restarts
 
 ---
@@ -25,33 +25,32 @@ A terminal-based music player with a Spotify-inspired interface. Manage your loc
 
 ### Option 1: Download Binary (Recommended)
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/GhanshyamJha05/spotifycli/releases).
+Download the latest release for your platform from [GitHub Releases](https://github.com/GhanshyamJha05/music-Cli/releases).
 
 | Platform | File |
 |----------|------|
-| Windows | `spotifycli-windows-amd64.exe` |
-| macOS (Apple Silicon) | `spotifycli-darwin-arm64` |
-| macOS (Intel) | `spotifycli-darwin-amd64` |
-| Linux | `spotifycli-linux-amd64` |
+| Windows | `music-Cli-windows.exe` |
+| macOS | `music-Cli-macos` |
+| Linux | `music-Cli-linux` |
 
 ### Option 2: Build from Source
 
 ```bash
 # Clone the repo
-git clone https://github.com/GhanshyamJha05/spotifycli.git
-cd spotifycli
+git clone https://github.com/GhanshyamJha05/music-Cli.git
+cd music-Cli
 
 # Build
-go build -o spotifycli .
+go build -o music-Cli .
 
 # Run
-./spotifycli
+./music-Cli
 ```
 
 ### Option 3: Install with Go
 
 ```bash
-go install github.com/GhanshyamJha05/spotifycli@latest
+go install github.com/GhanshyamJha05/music-Cli@latest
 ```
 
 ---
@@ -82,7 +81,7 @@ sudo apt install ffmpeg
 
 ```bash
 # Run the app
-./spotifycli
+./music-Cli
 
 # Or with Go
 go run .
@@ -215,7 +214,7 @@ Duration: (leave blank — auto-detected)
 ## Project Structure
 
 ```
-spotifycli/
+music-Cli/
 ├── main.go                          # Entry point
 ├── internal/
 │   ├── library/
@@ -243,15 +242,15 @@ Library data is stored at:
 
 | OS | Path |
 |----|------|
-| Windows | `C:\Users\YOU\.musiccli\library.json` |
-| macOS/Linux | `~/.musiccli/library.json` |
+| Windows | `C:\Users\YOU\.music-Cli\library.json` |
+| macOS/Linux | `~/.music-Cli/library.json` |
 
 Cached downloads (auto-cleaned after 7 days):
 
 | OS | Path |
 |----|------|
-| Windows | `C:\Users\YOU\.musiccli\cache\` |
-| macOS/Linux | `~/.musiccli/cache/` |
+| Windows | `C:\Users\YOU\.music-Cli\cache\` |
+| macOS/Linux | `~/.music-Cli/cache/` |
 
 ---
 
@@ -278,16 +277,16 @@ Currently, there is no configuration file. All settings are hardcoded:
 
 ```bash
 # Local build
-go build -o spotifycli .
+go build -o music-Cli .
 
-# Cross-compile for Windows
-GOOS=windows GOARCH=amd64 go build -o spotifycli.exe .
+# Build for Windows
+GOOS=windows GOARCH=amd64 go build -o music-Cli.exe .
 
-# Cross-compile for macOS
-GOOS=darwin GOARCH=arm64 go build -o spotifycli-macos .
+# Build for macOS
+GOOS=darwin GOARCH=arm64 go build -o music-Cli-macos .
 
-# Cross-compile for Linux
-GOOS=linux GOARCH=amd64 go build -o spotifycli-linux .
+# Build for Linux
+GOOS=linux GOARCH=amd64 go build -o music-Cli-linux .
 ```
 
 ### Run Tests

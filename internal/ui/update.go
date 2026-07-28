@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"musiccli/internal/library"
-	"musiccli/internal/online"
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
+	"github.com/GhanshyamJha05/music-Cli/internal/online"
 	"os"
 	"path/filepath"
 	"strconv"

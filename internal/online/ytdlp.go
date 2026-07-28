@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"musiccli/internal/library"
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -169,7 +169,7 @@ func YtdlpDownloadTemp(webpageURL string) (string, error) {
 	}
 
 	home, _ := os.UserHomeDir()
-	cacheDir := filepath.Join(home, ".musiccli", "cache")
+	cacheDir := filepath.Join(home, ".github.com/GhanshyamJha05/music-Cli", "cache")
 	_ = os.MkdirAll(cacheDir, 0755)
 
 	var lastErr error
@@ -225,7 +225,7 @@ func YtdlpDownloadTemp(webpageURL string) (string, error) {
 // It respects the provided context for cancellation/timeout.
 func CleanCache(ctx context.Context) {
 	home, _ := os.UserHomeDir()
-	cacheDir := filepath.Join(home, ".musiccli", "cache")
+	cacheDir := filepath.Join(home, ".github.com/GhanshyamJha05/music-Cli", "cache")
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
 		return

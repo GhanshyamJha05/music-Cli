@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"musiccli/internal/ui"
+	"github.com/GhanshyamJha05/music-Cli/internal/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

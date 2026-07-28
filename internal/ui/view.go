@@ -2,8 +2,8 @@ package ui
 
 import (
 	"fmt"
-	"musiccli/internal/library"
-	"musiccli/internal/online"
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
+	"github.com/GhanshyamJha05/music-Cli/internal/online"
 	"strings"
 	"unicode/utf8"
 

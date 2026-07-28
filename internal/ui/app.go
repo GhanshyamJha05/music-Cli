@@ -5,9 +5,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"musiccli/internal/library"
-	"musiccli/internal/online"
-	"musiccli/internal/player"
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
+	"github.com/GhanshyamJha05/music-Cli/internal/online"
+	"github.com/GhanshyamJha05/music-Cli/internal/player"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

@@ -1,4 +1,4 @@
-module musiccli
+module github.com/GhanshyamJha05/music-Cli
 
 go 1.25.4
 

@@ -47,7 +47,7 @@ var dataFile string
 
 func init() {
 	home, _ := os.UserHomeDir()
-	dataDir := filepath.Join(home, ".musiccli")
+	dataDir := filepath.Join(home, ".music-Cli")
 	_ = os.MkdirAll(dataDir, 0755)
 	dataFile = filepath.Join(dataDir, "library.json")
 }

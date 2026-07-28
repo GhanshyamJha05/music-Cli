@@ -33,10 +33,10 @@ ehthumbs.db
 Desktop.ini
 
 # Runtime data (user-specific)
-# Note: ~/.musiccli/ is the user data dir, not in repo
+# Note: ~/.music-Cli/ is the user data dir, not in repo
 
 # Cache directory (created by yt-dlp downloads)
 .cache/
 
 # Test binaries
-spotifycli_test
+music-Cli-test
