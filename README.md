@@ -1,4 +1,4 @@
-# music-Cli
+# Music-Cli
 
 A terminal-based music player with a clean, modern interface. Manage your local music library, create playlists, search YouTube, and stream music — all from the command line.
 
