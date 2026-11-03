@@ -2,14 +2,15 @@ package ui
 
 import (
 	"fmt"
-	"github.com/GhanshyamJha05/music-Cli/internal/library"
-	"github.com/GhanshyamJha05/music-Cli/internal/online"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
+	"github.com/GhanshyamJha05/music-Cli/internal/online"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -249,8 +250,12 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 		a.nowPlayingSong = nil
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
 	case "minus", "-":
 		a.pl.VolumeDown()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
 	case "d":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveSong(songs[a.libCursor].ID); err != nil {
@@ -445,8 +450,12 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		return a, a.rewindQueue()
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
 	case "minus", "-":
 		a.pl.VolumeDown()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
 	case "left", "h", ",":
 		a.pl.Seek(-5 * time.Second)
 		return a, a.setStatus("◀◀ -5s", false)

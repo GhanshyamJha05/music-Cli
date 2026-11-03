@@ -2,6 +2,7 @@ package player
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,14 +40,17 @@ func (s *playSession) close() {
 // volStreamer wraps a beep.Streamer and applies volume scaling.
 type volStreamer struct {
 	streamer beep.Streamer
-	volume   float64 // 0.0 to 1.0
+	volume   float64 // 0.0 to 1.0 (linear user perception scale)
 }
 
 func (v *volStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 	n, ok = v.streamer.Stream(samples)
+	// Apply cubic curve for perceptually uniform human hearing volume control:
+	// gain = volume^3. 0 -> 0, 0.5 -> 0.125, 1.0 -> 1.0.
+	gain := v.volume * v.volume * v.volume
 	for i := range samples[:n] {
-		samples[i][0] *= v.volume
-		samples[i][1] *= v.volume
+		samples[i][0] *= gain
+		samples[i][1] *= gain
 	}
 	return n, ok
 }
@@ -254,6 +258,8 @@ func (p *Player) IsPaused() bool {
 func (p *Player) SetVolume(vol float64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	// Round to two decimal places to prevent floating point drift
+	vol = math.Round(vol*100) / 100
 	if vol < 0 {
 		vol = 0
 	}
