@@ -191,6 +191,9 @@ func (a *App) updateHome(key string) (tea.Model, tea.Cmd) {
 	case "5":
 		// only enter if not already loading
 		if !a.onlineLoading {
+			if err := online.CheckDeps(); err != nil {
+				return a, a.setStatus("Online features unavailable: "+err.Error(), true)
+			}
 			a.screen = ScreenOnlineSearch
 			a.onlineResults = nil
 			a.onlineErr = ""
@@ -199,6 +202,9 @@ func (a *App) updateHome(key string) (tea.Model, tea.Cmd) {
 			a.onlineCursor = 0
 		}
 	case "6":
+		if err := online.CheckDeps(); err != nil {
+			return a, a.setStatus("Online features unavailable: "+err.Error(), true)
+		}
 		a.screen = ScreenRecommended
 		a.recCursor = 0
 		a.recActiveGenre = nil

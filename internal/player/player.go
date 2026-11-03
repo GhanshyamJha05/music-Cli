@@ -129,14 +129,12 @@ func (p *Player) playLocked(filePath string) error {
 		return fmt.Errorf("decode error: %w", err)
 	}
 
+	// speaker.Init must be called exactly once. Initialize with the first
+	// track's sample rate; do not re-initialize when switching tracks.
 	speakerOnce.Do(func() {
 		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 		p.currentRate = format.SampleRate
 	})
-	if p.currentRate != format.SampleRate {
-		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-		p.currentRate = format.SampleRate
-	}
 
 	p.ctrl = &beep.Ctrl{Streamer: streamer, Paused: false}
 	p.streamer = streamer

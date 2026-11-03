@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/faiface/beep"
@@ -14,6 +15,15 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/wav"
 )
+
+// idSeq is a monotonically increasing counter used to generate unique IDs
+// even when AddSong/CreatePlaylist are called in rapid succession
+// (time.Now().UnixNano() can return the same value within one nanosecond).
+var idSeq int64
+
+func nextID(prefix string) string {
+	return fmt.Sprintf("%s_%d_%d", prefix, time.Now().UnixNano(), atomic.AddInt64(&idSeq, 1))
+}
 
 // Song represents a single track
 type Song struct {
@@ -102,7 +112,7 @@ func (l *Library) saveLocked() error {
 // AddSong adds a song and saves
 func (l *Library) AddSong(title, artist, album, genre, filePath string, duration int) (Song, error) {
 	song := Song{
-		ID:       fmt.Sprintf("song_%d", time.Now().UnixNano()),
+		ID:       nextID("song"),
 		Title:    title,
 		Artist:   artist,
 		Album:    album,
@@ -113,6 +123,9 @@ func (l *Library) AddSong(title, artist, album, genre, filePath string, duration
 	}
 	l.mu.Lock()
 	l.Songs = append(l.Songs, song)
+	if l.searchIndex == nil {
+		l.searchIndex = make(map[string][4]string)
+	}
 	l.searchIndex[song.ID] = [4]string{
 		strings.ToLower(title),
 		strings.ToLower(artist),
@@ -124,7 +137,7 @@ func (l *Library) AddSong(title, artist, album, genre, filePath string, duration
 	return song, err
 }
 
-// RemoveSong removes a song by ID
+// RemoveSong removes a song by ID and cleans up any playlist references to it.
 func (l *Library) RemoveSong(id string) (bool, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -132,6 +145,16 @@ func (l *Library) RemoveSong(id string) (bool, error) {
 		if s.ID == id {
 			l.Songs = append(l.Songs[:i], l.Songs[i+1:]...)
 			delete(l.searchIndex, id)
+			// Remove the song from every playlist that references it
+			for pi := range l.Playlists {
+				filtered := make([]string, 0, len(l.Playlists[pi].SongIDs))
+				for _, sid := range l.Playlists[pi].SongIDs {
+					if sid != id {
+						filtered = append(filtered, sid)
+					}
+				}
+				l.Playlists[pi].SongIDs = filtered
+			}
 			return true, l.saveLocked()
 		}
 	}
@@ -141,7 +164,7 @@ func (l *Library) RemoveSong(id string) (bool, error) {
 // CreatePlaylist creates a new named playlist
 func (l *Library) CreatePlaylist(name string) (Playlist, error) {
 	pl := Playlist{
-		ID:        fmt.Sprintf("pl_%d", time.Now().UnixNano()),
+		ID:        nextID("pl"),
 		Name:      name,
 		SongIDs:   []string{},
 		CreatedAt: time.Now().Format("2006-01-02"),
@@ -228,12 +251,16 @@ func (l *Library) GetPlaylistSongs(playlistID string) []Song {
 	return nil
 }
 
-// Search returns songs matching the query (title, artist, album, genre)
+// Search returns songs matching the query (title, artist, album, genre).
+// An empty query returns no results.
 func (l *Library) Search(query string) []Song {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
-	q := strings.ToLower(query)
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return nil
+	}
 	results := make([]Song, 0, 16)
 	for _, s := range l.Songs {
 		fields, ok := l.searchIndex[s.ID]

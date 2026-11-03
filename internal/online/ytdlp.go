@@ -77,15 +77,6 @@ func retryDelay(attempt int) time.Duration {
 	return time.Duration(math.Pow(2, float64(attempt))) * time.Second
 }
 
-type ytdlpEntry struct {
-	ID         string  `json:"id"`
-	Title      string  `json:"title"`
-	Uploader   string  `json:"uploader"`
-	Album      string  `json:"album"`
-	Duration   float64 `json:"duration"`
-	WebpageURL string  `json:"webpage_url"`
-}
-
 // YtdlpSearch searches YouTube via yt-dlp and returns up to maxResults tracks.
 // It does NOT download audio - it only extracts metadata + URL.
 // Retries up to maxRetries times with exponential backoff on transient errors.
@@ -169,7 +160,7 @@ func YtdlpDownloadTemp(webpageURL string) (string, error) {
 	}
 
 	home, _ := os.UserHomeDir()
-	cacheDir := filepath.Join(home, ".github.com/GhanshyamJha05/music-Cli", "cache")
+	cacheDir := filepath.Join(home, ".music-Cli", "cache")
 	_ = os.MkdirAll(cacheDir, 0755)
 
 	var lastErr error
