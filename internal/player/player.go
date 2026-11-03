@@ -44,11 +44,9 @@ type volStreamer struct {
 
 func (v *volStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 	n, ok = v.streamer.Stream(samples)
-	if v.volume < 1.0 {
-		for i := range samples[:n] {
-			samples[i][0] *= v.volume
-			samples[i][1] *= v.volume
-		}
+	for i := range samples[:n] {
+		samples[i][0] *= v.volume
+		samples[i][1] *= v.volume
 	}
 	return n, ok
 }

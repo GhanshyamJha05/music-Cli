@@ -574,7 +574,7 @@ func (a *App) viewOnlineResults() string {
 	b.WriteString("\n")
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "stream & play"},
-		{"s", "save to library"}, {"n", "now playing"}, {"h", "back"},
+		{"s/a", "add to library"}, {"n", "now playing"}, {"h", "back"},
 	}))
 	return b.String()
 }

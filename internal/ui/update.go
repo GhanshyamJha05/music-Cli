@@ -247,9 +247,9 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
-	case "plus", "=":
+	case "plus", "=", "+":
 		a.pl.VolumeUp()
-	case "minus":
+	case "minus", "-":
 		a.pl.VolumeDown()
 	case "d":
 		if len(songs) > 0 {
@@ -439,9 +439,9 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		return a, a.advanceQueue()
 	case "<":
 		return a, a.rewindQueue()
-	case "plus", "=":
+	case "plus", "=", "+":
 		a.pl.VolumeUp()
-	case "minus":
+	case "minus", "-":
 		a.pl.VolumeDown()
 	case "left":
 		a.pl.Seek(-10 * time.Second)
@@ -769,7 +769,7 @@ func (a *App) updateOnlineResults(key string) (tea.Model, tea.Cmd) {
 		return a, func() tea.Msg {
 			return playOnlineTrack(track)
 		}
-	case "s":
+	case "s", "a":
 		if len(a.onlineResults) > 0 && a.onlineCursor < len(a.onlineResults) {
 			t := a.onlineResults[a.onlineCursor]
 			if _, err := a.lib.AddSong(t.Title, t.Artist, t.Album, "Online / "+t.Source, t.StreamURL, t.Duration); err != nil {
@@ -827,13 +827,13 @@ func (a *App) updateRecommended(key string) (tea.Model, tea.Cmd) {
 					return playOnlineTrack(track)
 				}
 			}
-		case "s":
+		case "s", "a":
 			if len(a.recResults) > 0 && a.recResCursor < len(a.recResults) {
 				t := a.recResults[a.recResCursor]
 				if _, err := a.lib.AddSong(t.Title, t.Artist, t.Album, a.recActiveGenre.Name, t.StreamURL, t.Duration); err != nil {
 					return a, a.setStatus("Save error: "+err.Error(), true)
 				}
-				return a, a.setStatus("Saved: "+t.Title, false)
+				return a, a.setStatus("Saved to library: "+t.Title, false)
 			}
 		case "b", "esc":
 			a.recActiveGenre = nil
