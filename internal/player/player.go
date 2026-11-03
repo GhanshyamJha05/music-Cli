@@ -294,24 +294,35 @@ func (p *Player) Seek(d time.Duration) {
 		return
 	}
 
-	// Calculate current position in samples
 	rate := p.currentRate
 	if rate == 0 {
 		return
 	}
 
-	currentPos := p.Elapsed()
+	currentPos := p.pausedAt
+	if p.state == StatePlaying {
+		currentPos += time.Since(p.started)
+	}
 	newPos := currentPos + d
 	if newPos < 0 {
 		newPos = 0
 	}
 
 	samplePos := rate.N(newPos)
+	maxLen := p.streamer.Len()
+	if maxLen > 0 && samplePos >= maxLen {
+		samplePos = maxLen - 1
+	}
+
 	speaker.Lock()
 	err := p.streamer.Seek(samplePos)
 	if err == nil {
-		// Update pausedAt so Elapsed() returns the correct position
-		p.pausedAt = newPos
+		actualPos := p.streamer.Position()
+		if actualPos >= 0 {
+			p.pausedAt = rate.D(actualPos)
+		} else {
+			p.pausedAt = newPos
+		}
 		if p.state == StatePlaying {
 			p.started = time.Now()
 		}
@@ -334,10 +345,19 @@ func (p *Player) SeekTo(pos time.Duration) {
 		pos = 0
 	}
 	samplePos := rate.N(pos)
+	maxLen := p.streamer.Len()
+	if maxLen > 0 && samplePos >= maxLen {
+		samplePos = maxLen - 1
+	}
 	speaker.Lock()
 	err := p.streamer.Seek(samplePos)
 	if err == nil {
-		p.pausedAt = pos
+		actualPos := p.streamer.Position()
+		if actualPos >= 0 {
+			p.pausedAt = rate.D(actualPos)
+		} else {
+			p.pausedAt = pos
+		}
 		if p.state == StatePlaying {
 			p.started = time.Now()
 		}

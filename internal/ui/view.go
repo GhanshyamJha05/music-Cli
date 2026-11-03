@@ -309,9 +309,9 @@ func (a *App) viewNowPlaying() string {
 	}
 
 	b.WriteString(renderHints([]hint{
-		{"space/p", "pause"}, {"s", "stop"}, {">", "next"},
-		{"<", "prev"}, {"←/→", "seek"}, {"+/-", "volume"},
-		{"l", "library"}, {"h", "back"},
+		{"space/p", "pause/resume"}, {"s", "stop"}, {">", "next"},
+		{"<", "prev"}, {"←/→ or ,/.", "±5s seek"}, {"[/]", "±15s"},
+		{"+/-", "volume"}, {"esc", "back"},
 	}))
 	return b.String()
 }

@@ -197,7 +197,7 @@ func (a *App) needsTick() bool {
 	if a.statusTimer > 0 {
 		return true
 	}
-	if a.nowPlayingSong != nil && a.pl.IsPlaying() {
+	if a.nowPlayingSong != nil && (a.pl.IsPlaying() || a.pl.IsPaused()) {
 		return true
 	}
 	return false

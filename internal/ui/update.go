@@ -432,6 +432,10 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 	switch key {
 	case "p", " ":
 		a.pl.Pause()
+		if a.pl.IsPaused() {
+			return a, a.setStatus("Paused", false)
+		}
+		return a, tea.Batch(a.setStatus("Resumed", false), tickCmd())
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
@@ -443,18 +447,26 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		a.pl.VolumeUp()
 	case "minus", "-":
 		a.pl.VolumeDown()
-	case "left":
-		a.pl.Seek(-10 * time.Second)
-	case "right":
-		a.pl.Seek(10 * time.Second)
-	case "esc", "h":
+	case "left", "h", ",":
+		a.pl.Seek(-5 * time.Second)
+		return a, a.setStatus("◀◀ -5s", false)
+	case "right", "l", ".":
+		a.pl.Seek(5 * time.Second)
+		return a, a.setStatus("▶▶ +5s", false)
+	case "[":
+		a.pl.Seek(-15 * time.Second)
+		return a, a.setStatus("◀◀ -15s", false)
+	case "]":
+		a.pl.Seek(15 * time.Second)
+		return a, a.setStatus("▶▶ +15s", false)
+	case "esc":
 		// go back — never recurse into NowPlaying
 		back := a.prevScreen
 		if back == ScreenNowPlaying || back == ScreenNone {
 			back = ScreenHome
 		}
 		a.screen = back
-	case "l":
+	case "m":
 		a.screen = ScreenLibrary
 	}
 	return a, nil
