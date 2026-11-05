@@ -56,8 +56,13 @@ type Library struct {
 var dataFile string
 
 func init() {
-	home, _ := os.UserHomeDir()
-	dataDir := filepath.Join(home, ".music-Cli")
+	home, err := os.UserHomeDir()
+	var dataDir string
+	if err != nil || home == "" {
+		dataDir = ".music-Cli"
+	} else {
+		dataDir = filepath.Join(home, ".music-Cli")
+	}
 	_ = os.MkdirAll(dataDir, 0755)
 	dataFile = filepath.Join(dataDir, "library.json")
 }

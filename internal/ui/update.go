@@ -266,7 +266,7 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 	case "d":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveSong(songs[a.libCursor].ID); err != nil {
-				return a, a.setStatus("Save error: "+err.Error(), true)
+				return a, a.setStatus("Remove error: "+err.Error(), true)
 			}
 			if a.libCursor >= len(a.lib.Songs) && a.libCursor > 0 {
 				a.libCursor--
@@ -373,7 +373,7 @@ func (a *App) updatePlaylists(key string) (tea.Model, tea.Cmd) {
 	case "d":
 		if len(pls) > 0 && a.playlistCursor < len(pls) {
 			if _, err := a.lib.DeletePlaylist(pls[a.playlistCursor].ID); err != nil {
-				return a, a.setStatus("Save error: "+err.Error(), true)
+				return a, a.setStatus("Delete error: "+err.Error(), true)
 			}
 			if a.playlistCursor >= len(a.lib.Playlists) && a.playlistCursor > 0 {
 				a.playlistCursor--
@@ -437,7 +437,7 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 	case "r":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveFromPlaylist(a.activePlaylist.ID, songs[a.playlistDetCursor].ID); err != nil {
-				return a, a.setStatus("Save error: "+err.Error(), true)
+				return a, a.setStatus("Remove error: "+err.Error(), true)
 			}
 			remaining := a.lib.GetPlaylistSongs(a.activePlaylist.ID)
 			if a.playlistDetCursor >= len(remaining) && a.playlistDetCursor > 0 {
@@ -544,7 +544,9 @@ func (a *App) updateAddSong(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			a.addSongFields[a.addSongFocus].Blur()
 			a.addSongFocus++
 			a.addSongFields[a.addSongFocus].Focus()
-			return a, nil
+			var cmd tea.Cmd
+			a.addSongFields[a.addSongFocus], cmd = a.addSongFields[a.addSongFocus].Update(msg)
+			return a, cmd
 		}
 		// submit
 		title := strings.TrimSpace(a.addSongFields[0].Value())
@@ -565,9 +567,11 @@ func (a *App) updateAddSong(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		} else {
 			// Auto-detect duration from file
-			if detected, err := library.DetectDuration(fp); err == nil && detected > 0 {
-				dur = detected
+			detected, err := library.DetectDuration(fp)
+			if err != nil || detected <= 0 {
+				return a, a.setStatus("Could not auto-detect duration: please specify duration in seconds", true)
 			}
+			dur = detected
 		}
 		if _, err := a.lib.AddSong(title, artist, album, genre, fp, dur); err != nil {
 			return a, a.setStatus("Save error: "+err.Error(), true)
@@ -633,6 +637,7 @@ func (a *App) updateAddToPlaylist(key string) (tea.Model, tea.Cmd) {
 	case "enter":
 		if len(pls) > 0 && a.addToPLCursor < len(pls) {
 			ok, err := a.lib.AddToPlaylist(pls[a.addToPLCursor].ID, a.addToPLSongID)
+			a.addToPLSongID = ""
 			if err != nil {
 				return a, a.setStatus("Save error: "+err.Error(), true)
 			}
@@ -643,6 +648,7 @@ func (a *App) updateAddToPlaylist(key string) (tea.Model, tea.Cmd) {
 			return a, a.setStatus("Song already in playlist", true)
 		}
 	case "esc", "h":
+		a.addToPLSongID = ""
 		a.screen = a.prevScreen
 	}
 	return a, nil
@@ -698,6 +704,9 @@ func isURL(path string) bool {
 
 // reDownloadSavedTrack downloads a saved online track via yt-dlp
 func reDownloadSavedTrack(song library.Song) savedTrackReadyMsg {
+	if err := online.CheckDeps(); err != nil {
+		return savedTrackReadyMsg{err: err}
+	}
 	path, err := online.YtdlpDownloadTemp(song.FilePath)
 	if err != nil {
 		return savedTrackReadyMsg{err: err}

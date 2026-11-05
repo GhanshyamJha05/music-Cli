@@ -172,8 +172,9 @@ go run .
 | `Enter` | Load genre picks |
 | `↑`/`↓` (in results) | Navigate tracks |
 | `Enter` (on track) | Play |
-| `s` | Save to library |
-| `Esc` | Back |
+| `s` / `a` | Save to library |
+| `b` / `Esc` | Back to genres |
+| `h` | Back to Home |
 
 ---
 
@@ -260,8 +261,8 @@ Currently, there is no configuration file. All settings are hardcoded:
 
 - Default volume: 70%
 - Cache cleanup: 7 days
-- Online search timeout: 60 seconds
-- Download timeout: 3 minutes
+- Online search timeout: 60 seconds (retries up to 3 times with exponential backoff)
+- Download timeout: 3 minutes (retries up to 3 times with exponential backoff)
 
 ---
 
