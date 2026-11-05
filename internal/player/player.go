@@ -83,6 +83,7 @@ type Player struct {
 var globalPlayer *Player
 var once sync.Once
 var speakerOnce sync.Once
+var speakerRate beep.SampleRate
 
 // Get returns the singleton player
 func Get() *Player {
@@ -135,8 +136,9 @@ func (p *Player) playLocked(filePath string) error {
 	// track's sample rate; do not re-initialize when switching tracks.
 	speakerOnce.Do(func() {
 		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-		p.currentRate = format.SampleRate
+		speakerRate = format.SampleRate
 	})
+	p.currentRate = format.SampleRate
 
 	p.ctrl = &beep.Ctrl{Streamer: streamer, Paused: false}
 	p.streamer = streamer
@@ -154,12 +156,17 @@ func (p *Player) playLocked(filePath string) error {
 		volume:   p.volume,
 	}
 
+	var playableStreamer beep.Streamer = p.volStr
+	if format.SampleRate != speakerRate && speakerRate > 0 {
+		playableStreamer = beep.Resample(3, format.SampleRate, speakerRate, p.volStr)
+	}
+
 	sess := &playSession{done: make(chan struct{})}
 	p.session = sess
 
 	onFinish := p.OnFinish
 
-	speaker.Play(beep.Seq(p.volStr, beep.Callback(func() {
+	speaker.Play(beep.Seq(playableStreamer, beep.Callback(func() {
 		sess.close()
 		if onFinish != nil {
 			onFinish()
