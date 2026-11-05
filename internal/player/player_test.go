@@ -63,7 +63,7 @@ func TestInitialStateStopped(t *testing.T) {
 func TestSeekOnStoppedPlayerIsNoop(t *testing.T) {
 	p := Get()
 	// Seek should not panic on a stopped player
-	p.Seek(10 * 1000000000) // 10 seconds forward
+	p.Seek(10 * 1000000000)  // 10 seconds forward
 	p.Seek(-10 * 1000000000) // 10 seconds backward
 	if p.GetState() != StateStopped {
 		t.Fatalf("state should remain Stopped after seek, got %v", p.GetState())

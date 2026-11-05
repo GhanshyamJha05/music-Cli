@@ -252,6 +252,11 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
+		a.queueSongs = nil
+		a.queueIndex = 0
+		return a, a.setStatus("Stopped", false)
+		a.queueSongs = nil
+		a.queueIndex = 0
 		return a, a.setStatus("Stopped", false)
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
@@ -421,6 +426,11 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
+		a.queueSongs = nil
+		a.queueIndex = 0
+		return a, a.setStatus("Stopped", false)
+		a.queueSongs = nil
+		a.queueIndex = 0
 		return a, a.setStatus("Stopped", false)
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
@@ -465,6 +475,9 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
+		a.queueSongs = nil
+		a.queueIndex = 0
+		return a, a.setStatus("Stopped", false)
 	case ">":
 		return a, a.advanceQueue()
 	case "<":

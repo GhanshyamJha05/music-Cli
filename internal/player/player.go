@@ -65,19 +65,19 @@ func (v *volStreamer) SetVolume(vol float64) {
 
 // Player manages audio playback
 type Player struct {
-	mu             sync.Mutex
-	state          State
-	currentFile    string
-	ctrl           *beep.Ctrl
-	volStr         *volStreamer
-	streamer       beep.StreamSeekCloser
-	session        *playSession
-	started        time.Time
-	pausedAt       time.Duration
-	OnFinish       func()
-	currentRate    beep.SampleRate
-	volume         float64 // 0.0 (silent) to 1.0 (full)
-	tempFiles      map[string]struct{} // tracks active temp files
+	mu          sync.Mutex
+	state       State
+	currentFile string
+	ctrl        *beep.Ctrl
+	volStr      *volStreamer
+	streamer    beep.StreamSeekCloser
+	session     *playSession
+	started     time.Time
+	pausedAt    time.Duration
+	OnFinish    func()
+	currentRate beep.SampleRate
+	volume      float64             // 0.0 (silent) to 1.0 (full)
+	tempFiles   map[string]struct{} // tracks active temp files
 }
 
 var globalPlayer *Player

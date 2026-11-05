@@ -47,9 +47,9 @@ type Playlist struct {
 
 // Library is the top-level data store
 type Library struct {
-	mu          sync.RWMutex `json:"-"`
-	Songs       []Song       `json:"songs"`
-	Playlists   []Playlist   `json:"playlists"`
+	mu          sync.RWMutex         `json:"-"`
+	Songs       []Song               `json:"songs"`
+	Playlists   []Playlist           `json:"playlists"`
 	searchIndex map[string][4]string // ID → [lowerTitle, lowerArtist, lowerAlbum, lowerGenre]
 }
 

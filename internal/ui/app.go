@@ -212,5 +212,3 @@ func (a *App) needsTick() bool {
 	}
 	return false
 }
-
-

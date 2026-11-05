@@ -1,4 +1,4 @@
-﻿// Package online provides YouTube search and streaming via yt-dlp.
+// Package online provides YouTube search and streaming via yt-dlp.
 package online
 
 import (
@@ -7,8 +7,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
 	"github.com/GhanshyamJha05/music-Cli/internal/library"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
