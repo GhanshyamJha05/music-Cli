@@ -489,6 +489,18 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 	case "]":
 		a.pl.Seek(15 * time.Second)
 		return a, a.setStatus("▶▶ +15s", false)
+	case "repeat", "R", "r":
+		switch a.loopMode {
+		case LoopOff:
+			a.loopMode = LoopAll
+			return a, a.setStatus("Loop: All Tracks (🔁)", false)
+		case LoopAll:
+			a.loopMode = LoopOne
+			return a, a.setStatus("Loop: Current Track (🔂)", false)
+		case LoopOne:
+			a.loopMode = LoopOff
+			return a, a.setStatus("Loop: Off", false)
+		}
 	case "esc", "h":
 		// go back — never recurse into NowPlaying
 		back := a.prevScreen
@@ -713,18 +725,44 @@ func validateAudioPath(path string) error {
 }
 
 func (a *App) advanceQueue() tea.Cmd {
+	if len(a.queueSongs) == 0 {
+		a.pl.Stop()
+		a.nowPlayingSong = nil
+		return nil
+	}
+
+	if a.loopMode == LoopOne {
+		return a.playCurrent()
+	}
+
 	if a.queueIndex < len(a.queueSongs)-1 {
 		a.queueIndex++
 		return a.playCurrent()
 	}
+
+	if a.loopMode == LoopAll {
+		a.queueIndex = 0
+		return a.playCurrent()
+	}
+
 	a.pl.Stop()
 	a.nowPlayingSong = nil
 	return nil
 }
 
 func (a *App) rewindQueue() tea.Cmd {
+	if len(a.queueSongs) == 0 {
+		return nil
+	}
+	if a.loopMode == LoopOne {
+		return a.playCurrent()
+	}
 	if a.queueIndex > 0 {
 		a.queueIndex--
+		return a.playCurrent()
+	}
+	if a.loopMode == LoopAll {
+		a.queueIndex = len(a.queueSongs) - 1
 		return a.playCurrent()
 	}
 	return nil

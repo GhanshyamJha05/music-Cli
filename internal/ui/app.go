@@ -32,6 +32,15 @@ const (
 	ScreenRecommended   // genre picker
 )
 
+// LoopMode represents queue repeat behavior
+type LoopMode int
+
+const (
+	LoopOff LoopMode = iota // stop at end of queue
+	LoopAll                 // repeat the entire queue
+	LoopOne                 // repeat the current track
+)
+
 // tickMsg is sent every second to update the progress bar
 type tickMsg time.Time
 
@@ -58,6 +67,7 @@ type App struct {
 	nowPlayingSong *library.Song
 	queueSongs     []library.Song
 	queueIndex     int
+	loopMode       LoopMode
 
 	// local search
 	searchInput   textinput.Model

@@ -303,15 +303,25 @@ func (a *App) viewNowPlaying() string {
 	b.WriteString(lipgloss.NewStyle().Foreground(lightBlue).Render(progressLine) + "\n\n")
 	b.WriteString(volBar + "\n\n")
 
-	// Queue info
+	// Queue info & Loop mode
+	var queueParts []string
 	if len(a.queueSongs) > 1 {
-		queueInfo := fmt.Sprintf("  Track %d / %d", a.queueIndex+1, len(a.queueSongs))
-		b.WriteString(dimItemStyle.Render(queueInfo) + "\n\n")
+		queueParts = append(queueParts, fmt.Sprintf("Track %d / %d", a.queueIndex+1, len(a.queueSongs)))
+	}
+	switch a.loopMode {
+	case LoopAll:
+		queueParts = append(queueParts, lipgloss.NewStyle().Foreground(green).Bold(true).Render("🔁 LOOP ALL"))
+	case LoopOne:
+		queueParts = append(queueParts, lipgloss.NewStyle().Foreground(yellow).Bold(true).Render("🔂 LOOP ONE"))
+	}
+	if len(queueParts) > 0 {
+		b.WriteString("  " + dimItemStyle.Render(strings.Join(queueParts, "  •  ")) + "\n\n")
 	}
 
 	b.WriteString(renderHints([]hint{
 		{"space/p", "pause/resume"}, {"s", "stop"}, {">", "next"},
-		{"<", "prev"}, {"←/→ or ,/.", "±5s seek"}, {"[/]", "±15s"},
+		{"<", "prev"}, {"r", "loop (off/all/one)"},
+		{"←/→ or ,/.", "±5s seek"}, {"[/]", "±15s"},
 		{"+/-", "volume"}, {"l", "library"}, {"esc/h", "back"},
 	}))
 	return b.String()
