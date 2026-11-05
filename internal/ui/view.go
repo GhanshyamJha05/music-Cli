@@ -227,7 +227,8 @@ func (a *App) viewPlaylistDetail() string {
 	b.WriteString("\n")
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "play"}, {"p", "pause"},
-		{"r", "remove from playlist"}, {"n", "now playing"}, {"h", "back"},
+		{"s", "stop"}, {"+/-", "volume"}, {"r", "remove"},
+		{"n", "now playing"}, {"esc/h", "back"},
 	}))
 	return b.String()
 }
@@ -311,7 +312,7 @@ func (a *App) viewNowPlaying() string {
 	b.WriteString(renderHints([]hint{
 		{"space/p", "pause/resume"}, {"s", "stop"}, {">", "next"},
 		{"<", "prev"}, {"←/→ or ,/.", "±5s seek"}, {"[/]", "±15s"},
-		{"+/-", "volume"}, {"esc", "back"},
+		{"+/-", "volume"}, {"l", "library"}, {"esc/h", "back"},
 	}))
 	return b.String()
 }
@@ -678,7 +679,7 @@ func (a *App) viewRecommended() string {
 		b.WriteString("\n")
 		b.WriteString(renderHints([]hint{
 			{"↑/↓", "navigate"}, {"enter", "play"},
-			{"s", "save to library"}, {"b/esc", "genres"},
+			{"s/a", "save to library"}, {"b/esc", "genres"},
 			{"n", "now playing"}, {"h", "home"},
 		}))
 		return b.String()

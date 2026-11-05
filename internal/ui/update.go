@@ -237,17 +237,22 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 		if a.libCursor < len(songs)-1 {
 			a.libCursor++
 		}
-	case "enter", " ":
+	case "enter":
 		if len(songs) > 0 {
 			a.prevScreen = ScreenLibrary
 			a.screen = ScreenNowPlaying
 			return a, a.playFromList(songs, a.libCursor)
 		}
-	case "p":
+	case "p", " ":
 		a.pl.Pause()
+		if a.pl.IsPaused() {
+			return a, a.setStatus("Paused", false)
+		}
+		return a, a.setStatus("Resumed", false)
 	case "s":
 		a.pl.Stop()
 		a.nowPlayingSong = nil
+		return a, a.setStatus("Stopped", false)
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
 		pct := int(math.Round(a.pl.GetVolume() * 100))
@@ -401,14 +406,30 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 		if a.playlistDetCursor < len(songs)-1 {
 			a.playlistDetCursor++
 		}
-	case "enter", " ":
+	case "enter":
 		if len(songs) > 0 {
 			a.prevScreen = ScreenPlaylistDetail
 			a.screen = ScreenNowPlaying
 			return a, a.playFromList(songs, a.playlistDetCursor)
 		}
-	case "p":
+	case "p", " ":
 		a.pl.Pause()
+		if a.pl.IsPaused() {
+			return a, a.setStatus("Paused", false)
+		}
+		return a, a.setStatus("Resumed", false)
+	case "s":
+		a.pl.Stop()
+		a.nowPlayingSong = nil
+		return a, a.setStatus("Stopped", false)
+	case "plus", "=", "+":
+		a.pl.VolumeUp()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
+	case "minus", "-":
+		a.pl.VolumeDown()
+		pct := int(math.Round(a.pl.GetVolume() * 100))
+		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
 	case "r":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveFromPlaylist(a.activePlaylist.ID, songs[a.playlistDetCursor].ID); err != nil {
@@ -456,10 +477,10 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		a.pl.VolumeDown()
 		pct := int(math.Round(a.pl.GetVolume() * 100))
 		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
-	case "left", "h", ",":
+	case "left", ",":
 		a.pl.Seek(-5 * time.Second)
 		return a, a.setStatus("◀◀ -5s", false)
-	case "right", "l", ".":
+	case "right", ".":
 		a.pl.Seek(5 * time.Second)
 		return a, a.setStatus("▶▶ +5s", false)
 	case "[":
@@ -468,14 +489,14 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 	case "]":
 		a.pl.Seek(15 * time.Second)
 		return a, a.setStatus("▶▶ +15s", false)
-	case "esc":
+	case "esc", "h":
 		// go back — never recurse into NowPlaying
 		back := a.prevScreen
 		if back == ScreenNowPlaying || back == ScreenNone {
 			back = ScreenHome
 		}
 		a.screen = back
-	case "m":
+	case "l", "m":
 		a.screen = ScreenLibrary
 	}
 	return a, nil
