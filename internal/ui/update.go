@@ -77,8 +77,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		s := msg.song
 		a.nowPlayingSong = &s
-		a.queueSongs = []library.Song{s}
-		a.queueIndex = 0
+		if len(a.queueSongs) == 0 {
+			a.queueSongs = []library.Song{s}
+			a.queueIndex = 0
+		}
 		a.screen = ScreenNowPlaying
 		return a, tickCmd()
 
@@ -263,6 +265,18 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 		a.pl.VolumeDown()
 		pct := int(math.Round(a.pl.GetVolume() * 100))
 		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
+	case "repeat", "R", "r":
+		switch a.loopMode {
+		case LoopOff:
+			a.loopMode = LoopAll
+			return a, a.setStatus("Loop: All Tracks (🔁)", false)
+		case LoopAll:
+			a.loopMode = LoopOne
+			return a, a.setStatus("Loop: Current Track (🔂)", false)
+		case LoopOne:
+			a.loopMode = LoopOff
+			return a, a.setStatus("Loop: Off", false)
+		}
 	case "d":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveSong(songs[a.libCursor].ID); err != nil {
@@ -434,6 +448,18 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 		a.pl.VolumeDown()
 		pct := int(math.Round(a.pl.GetVolume() * 100))
 		return a, a.setStatus(fmt.Sprintf("Volume: %d%%", pct), false)
+	case "repeat", "R":
+		switch a.loopMode {
+		case LoopOff:
+			a.loopMode = LoopAll
+			return a, a.setStatus("Loop: All Tracks (🔁)", false)
+		case LoopAll:
+			a.loopMode = LoopOne
+			return a, a.setStatus("Loop: Current Track (🔂)", false)
+		case LoopOne:
+			a.loopMode = LoopOff
+			return a, a.setStatus("Loop: Off", false)
+		}
 	case "r":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveFromPlaylist(a.activePlaylist.ID, songs[a.playlistDetCursor].ID); err != nil {

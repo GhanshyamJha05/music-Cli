@@ -129,7 +129,7 @@ func (a *App) viewLibrary() string {
 	b.WriteString("\n")
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "play"}, {"p", "pause"},
-		{"s", "stop"}, {"a", "add to playlist"}, {"d", "delete"},
+		{"s", "stop"}, {"r", "loop"}, {"a", "add to playlist"}, {"d", "delete"},
 		{"n", "now playing"}, {"h", "back"},
 	}))
 	return b.String()
