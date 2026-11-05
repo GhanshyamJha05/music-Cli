@@ -55,20 +55,41 @@ go install github.com/GhanshyamJha05/music-Cli@latest
 
 ---
 
+### Linux (Arch Linux / Ubuntu / Debian / WSL)
+
+On Linux, `beep` / `oto` requires ALSA development headers to compile and run audio:
+
+```bash
+# Arch Linux
+sudo pacman -S alsa-lib yt-dlp ffmpeg
+
+# Ubuntu / Debian / WSL
+sudo apt update && sudo apt install -y libasound2-dev yt-dlp ffmpeg
+```
+
+---
+
 ## Prerequisites
 
 For **online streaming** (YouTube search/recommendations), you need:
 
 ```bash
 # yt-dlp — YouTube download tool
+# Arch Linux:
+sudo pacman -S yt-dlp
+# Ubuntu/Debian:
+sudo apt install yt-dlp
+# Or via pip:
 pip install yt-dlp
 
 # ffmpeg — Required for audio extraction
-# Windows: download from https://ffmpeg.org/download.html
-# macOS:
-brew install ffmpeg
+# Arch Linux:
+sudo pacman -S ffmpeg
 # Ubuntu/Debian:
 sudo apt install ffmpeg
+# macOS:
+brew install ffmpeg
+# Windows: winget install Gyan.FFmpeg
 ```
 
 > **Note:** Local playback works without these dependencies.
