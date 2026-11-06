@@ -32,16 +32,18 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().
 				Foreground(black).
 				Background(green).
-				Bold(true).
-				Padding(0, 1)
+				Bold(true)
+
+	selectedItemAccentStyle = lipgloss.NewStyle().
+				Foreground(black).
+				Background(accent).
+				Bold(true)
 
 	normalItemStyle = lipgloss.NewStyle().
-			Foreground(white).
-			Padding(0, 1)
+			Foreground(white)
 
 	dimItemStyle = lipgloss.NewStyle().
-			Foreground(gray).
-			Padding(0, 1)
+			Foreground(gray)
 
 	boxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -112,19 +114,56 @@ func Logo() string {
  ╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═════╝`)
 }
 
-// ProgressBar renders a simple text progress bar
+// ProgressBar renders a smooth modern progress bar
 func ProgressBar(percent float64, width int) string {
 	if width <= 0 {
 		width = 30
 	}
-	filled := int(float64(width) * percent)
+	if percent < 0 {
+		percent = 0
+	}
+	if percent > 1 {
+		percent = 1
+	}
+
+	total := float64(width) * percent
+	filled := int(total)
 	if filled > width {
 		filled = width
 	}
-	empty := width - filled
-	bar := lipgloss.NewStyle().Foreground(green).Render(strings.Repeat("█", filled)) +
-		lipgloss.NewStyle().Foreground(darkGray).Render(strings.Repeat("░", empty))
-	return bar
+
+	var buf strings.Builder
+	for i := 0; i < filled; i++ {
+		buf.WriteString("━")
+	}
+
+	if filled < width {
+		buf.WriteString("╸")
+		for i := filled + 1; i < width; i++ {
+			buf.WriteString("─")
+		}
+	}
+
+	runes := []rune(buf.String())
+	if len(runes) > width {
+		runes = runes[:width]
+	}
+
+	headIdx := filled
+	if headIdx >= len(runes) {
+		headIdx = len(runes) - 1
+	}
+
+	filledStr := string(runes[:headIdx])
+	var headStr, emptyStr string
+	if headIdx < len(runes) {
+		headStr = string(runes[headIdx : headIdx+1])
+		emptyStr = string(runes[headIdx+1:])
+	}
+
+	return lipgloss.NewStyle().Foreground(accent).Bold(true).Render(filledStr) +
+		lipgloss.NewStyle().Foreground(white).Bold(true).Render(headStr) +
+		lipgloss.NewStyle().Foreground(darkGray).Render(emptyStr)
 }
 
 // VolumeBar renders a volume indicator bar

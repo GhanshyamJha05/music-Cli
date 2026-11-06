@@ -40,6 +40,11 @@ func (a *App) View() string {
 		b.WriteString(a.viewRecommended())
 	}
 
+	// Sticky Mini-player for screens other than Home and NowPlaying
+	if a.screen != ScreenHome && a.screen != ScreenNowPlaying && a.nowPlayingSong != nil {
+		b.WriteString("\n" + a.miniNowPlaying() + "\n")
+	}
+
 	// Status bar at bottom
 	if a.statusMsg != "" {
 		var s string
@@ -101,10 +106,29 @@ func (a *App) miniNowPlaying() string {
 		state = "⏸"
 		badge = pausedBadge
 	}
+
+	elapsed := a.pl.Elapsed()
+	elapsedStr := fmt.Sprintf("%d:%02d", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
+	totalStr := library.FormatDuration(a.nowPlayingSong.Duration)
+
+	loopBadge := ""
+	switch a.loopMode {
+	case LoopAll:
+		loopBadge = "  " + lipgloss.NewStyle().Foreground(green).Bold(true).Render("🔁 ALL")
+	case LoopOne:
+		loopBadge = "  " + lipgloss.NewStyle().Foreground(yellow).Bold(true).Render("🔂 ONE")
+	}
+
+	vol := int(a.pl.GetVolume() * 100)
+	volStr := dimItemStyle.Render(fmt.Sprintf("Vol: %d%%", vol))
+
+	songInfo := lipgloss.NewStyle().Foreground(white).Bold(true).Render(truncate(a.nowPlayingSong.Title, 30)) +
+		"  " + subtitleStyle.Render(truncate(a.nowPlayingSong.Artist, 20))
+
+	timeInfo := lipgloss.NewStyle().Foreground(lightBlue).Render(fmt.Sprintf("[%s / %s]", elapsedStr, totalStr))
+
 	return nowPlayingStyle.Render(
-		badge.Render(state) + "  " +
-			lipgloss.NewStyle().Foreground(white).Bold(true).Render(a.nowPlayingSong.Title) +
-			"  " + subtitleStyle.Render(a.nowPlayingSong.Artist),
+		badge.Render(state) + "  " + songInfo + "   " + timeInfo + "   " + volStr + loopBadge,
 	)
 }
 
@@ -119,11 +143,14 @@ func (a *App) viewLibrary() string {
 		b.WriteString(dimItemStyle.Render("  No songs yet. Press [4] to add one.") + "\n")
 	} else {
 		// reserved: title(1) + subtitle(1) + blank(1) + header(2) + blank(1) + hints(1) + status(0-1)
-		reserved := 7
+		reserved := 8
 		if a.statusMsg != "" {
 			reserved++
 		}
-		b.WriteString(renderSongList(a.lib.Songs, a.libCursor, a.nowPlayingSong, a.height, reserved))
+		if a.nowPlayingSong != nil {
+			reserved += 2
+		}
+		b.WriteString(a.renderSongList(a.lib.Songs, a.libCursor, a.nowPlayingSong, reserved))
 	}
 
 	b.WriteString("\n")
@@ -159,7 +186,10 @@ func (a *App) viewSearch() string {
 		if a.statusMsg != "" {
 			reserved++
 		}
-		b.WriteString(renderSongList(a.searchResults, a.searchCursor, a.nowPlayingSong, a.height, reserved))
+		if a.nowPlayingSong != nil {
+			reserved += 2
+		}
+		b.WriteString(a.renderSongList(a.searchResults, a.searchCursor, a.nowPlayingSong, reserved))
 	}
 
 	b.WriteString("\n")
@@ -217,11 +247,14 @@ func (a *App) viewPlaylistDetail() string {
 		b.WriteString(dimItemStyle.Render("  No songs. Go to Library and press [a] to add.") + "\n")
 	} else {
 		// reserved: title(1) + subtitle(1) + blank(1) + header(2) + blank(1) + hints(1) + status(0-1)
-		reserved := 7
+		reserved := 8
 		if a.statusMsg != "" {
 			reserved++
 		}
-		b.WriteString(renderSongList(songs, a.playlistDetCursor, a.nowPlayingSong, a.height, reserved))
+		if a.nowPlayingSong != nil {
+			reserved += 2
+		}
+		b.WriteString(a.renderSongList(songs, a.playlistDetCursor, a.nowPlayingSong, reserved))
 	}
 
 	b.WriteString("\n")
@@ -319,10 +352,10 @@ func (a *App) viewNowPlaying() string {
 	}
 
 	b.WriteString(renderHints([]hint{
-		{"space/p", "pause/resume"}, {"s", "stop"}, {">", "next"},
-		{"<", "prev"}, {"r", "loop (off/all/one)"},
-		{"←/→ or ,/.", "±5s seek"}, {"[/]", "±15s"},
-		{"+/-", "volume"}, {"l", "library"}, {"esc/h", "back"},
+		{"space/p", "pause/resume"}, {"s", "stop"}, {">", "next"}, {"<", "prev"},
+	}))
+	b.WriteString(renderHints([]hint{
+		{"r", "loop (off/all/one)"}, {"←/→", "±5s seek"}, {"[/]", "±15s"}, {"+/-", "vol"}, {"esc/h", "back"},
 	}))
 	return b.String()
 }
@@ -392,26 +425,63 @@ func (a *App) viewAddToPlaylist() string {
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
-// renderSongList renders a scrollable song list with cursor, showing only
-// the songs that fit on screen (virtual scrolling).
-func renderSongList(songs []library.Song, cursor int, nowPlaying *library.Song, height int, reservedLines int) string {
+// renderSongList renders a scrollable song list with cursor, dynamically adapting
+// to available terminal width and padding the selected line cleanly.
+func (a *App) renderSongList(songs []library.Song, cursor int, nowPlaying *library.Song, reservedLines int) string {
 	var b strings.Builder
-	// column header
-	header := fmt.Sprintf("  %-3s  %-28s %-20s %-15s %6s",
-		"#", "TITLE", "ARTIST", "ALBUM", "TIME")
+
+	termWidth := a.width
+	if termWidth <= 0 {
+		termWidth = 80
+	}
+
+	// Layout widths
+	numW := 4
+	durW := 6
+	markW := 2
+
+	// Flexible columns: Title, Artist, Album
+	remain := termWidth - (markW + numW + durW + 8)
+	if remain < 30 {
+		remain = 30
+	}
+
+	titleW := int(float64(remain) * 0.45)
+	artistW := int(float64(remain) * 0.30)
+	albumW := remain - titleW - artistW
+	if titleW < 14 {
+		titleW = 14
+	}
+	if artistW < 10 {
+		artistW = 10
+	}
+	if albumW < 6 {
+		albumW = 6
+	}
+
+	header := fmt.Sprintf("  %-*s %-*s %-*s %*s",
+		titleW, "TITLE", artistW, "ARTIST", albumW, "ALBUM", durW, "TIME")
 	b.WriteString(lipgloss.NewStyle().Foreground(gray).Bold(true).Render(header) + "\n")
-	b.WriteString(lipgloss.NewStyle().Foreground(darkGray).Render(strings.Repeat("─", 78)) + "\n")
+
+	dividerW := termWidth
+	if dividerW > 120 {
+		dividerW = 120
+	}
+	b.WriteString(lipgloss.NewStyle().Foreground(darkGray).Render(strings.Repeat("─", dividerW)) + "\n")
 
 	if len(songs) == 0 {
 		return b.String()
 	}
 
+	height := a.height
+	if height <= 0 {
+		height = 24
+	}
 	visibleRows := height - reservedLines
 	if visibleRows < 1 {
 		visibleRows = 1
 	}
 
-	// Calculate the visible window centered on the cursor
 	start := cursor - visibleRows/2
 	if start < 0 {
 		start = 0
@@ -420,7 +490,6 @@ func renderSongList(songs []library.Song, cursor int, nowPlaying *library.Song, 
 	if end > len(songs) {
 		end = len(songs)
 	}
-	// Re-adjust start if we hit the end boundary
 	if end-start < visibleRows && start > 0 {
 		start = end - visibleRows
 		if start < 0 {
@@ -430,25 +499,25 @@ func renderSongList(songs []library.Song, cursor int, nowPlaying *library.Song, 
 
 	for i := start; i < end; i++ {
 		s := songs[i]
-		num := fmt.Sprintf("%3d", i+1)
-		title := truncate(s.Title, 27)
-		artist := truncate(s.Artist, 19)
-		album := truncate(s.Album, 14)
+		num := fmt.Sprintf("%2d.", i+1)
+		title := truncate(s.Title, titleW-1)
+		artist := truncate(s.Artist, artistW-1)
+		album := truncate(s.Album, albumW-1)
 		dur := library.FormatDuration(s.Duration)
 
 		isPlaying := nowPlaying != nil && nowPlaying.ID == s.ID
 		playMark := "  "
 		if isPlaying {
-			playMark = lipgloss.NewStyle().Foreground(green).Render("♫ ")
+			playMark = "♫ "
 		}
 
-		line := fmt.Sprintf("%s%-3s  %-28s %-20s %-15s %6s",
-			playMark, num, title, artist, album, dur)
+		line := fmt.Sprintf("%s%-3s %-*s %-*s %-*s %*s",
+			playMark, num, titleW, title, artistW, artist, albumW, album, durW, dur)
 
 		if i == cursor {
-			b.WriteString(selectedItemStyle.Render(line) + "\n")
+			b.WriteString(selectedItemStyle.Width(dividerW).Render(line) + "\n")
 		} else if isPlaying {
-			b.WriteString(lipgloss.NewStyle().Foreground(accent).Render("  "+line) + "\n")
+			b.WriteString(lipgloss.NewStyle().Foreground(accent).Bold(true).Render(line) + "\n")
 		} else {
 			b.WriteString(normalItemStyle.Render(line) + "\n")
 		}
