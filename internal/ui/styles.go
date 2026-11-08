@@ -34,11 +34,6 @@ var (
 				Background(green).
 				Bold(true)
 
-	selectedItemAccentStyle = lipgloss.NewStyle().
-				Foreground(black).
-				Background(accent).
-				Bold(true)
-
 	normalItemStyle = lipgloss.NewStyle().
 			Foreground(white)
 
