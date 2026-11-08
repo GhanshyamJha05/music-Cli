@@ -156,7 +156,8 @@ func (a *App) viewLibrary() string {
 	b.WriteString("\n")
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "play"}, {"p", "pause"},
-		{"s", "stop"}, {"r", "loop"}, {"a", "add to playlist"}, {"d", "delete"},
+		{"s", "stop"}, {"r", "loop"}, {"tab/>", "skip"},
+		{"K/J", "reorder"}, {"a", "add to PL"}, {"d", "remove"},
 		{"n", "now playing"}, {"h", "back"},
 	}))
 	return b.String()
@@ -260,8 +261,8 @@ func (a *App) viewPlaylistDetail() string {
 	b.WriteString("\n")
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "play"}, {"p", "pause"},
-		{"s", "stop"}, {"+/-", "volume"}, {"r", "remove"},
-		{"n", "now playing"}, {"esc/h", "back"},
+		{"s", "stop"}, {"+/-", "volume"}, {"tab/>", "skip"},
+		{"K/J", "reorder"}, {"d/r", "remove"}, {"n", "now playing"}, {"esc/h", "back"},
 	}))
 	return b.String()
 }

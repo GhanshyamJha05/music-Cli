@@ -218,6 +218,52 @@ func TestDetectDurationUnsupportedFormat(t *testing.T) {
 	}
 }
 
+func TestSongExistsAndMove(t *testing.T) {
+	tmpDir := t.TempDir()
+	dataFile = filepath.Join(tmpDir, "library.json")
+
+	lib := &Library{}
+	s1, _ := lib.AddSong("Alpha", "Artist", "Album", "Rock", "/music/alpha.mp3", 100)
+	s2, _ := lib.AddSong("Beta", "Artist", "Album", "Pop", "/music/beta.mp3", 200)
+
+	// Check SongExists
+	if !lib.SongExists("/music/alpha.mp3", "", "") {
+		t.Errorf("expected SongExists to find alpha by path")
+	}
+	if !lib.SongExists("", "Beta", "Artist") {
+		t.Errorf("expected SongExists to find beta by title & artist")
+	}
+	if lib.SongExists("/music/gamma.mp3", "Gamma", "Artist") {
+		t.Errorf("did not expect gamma to exist")
+	}
+
+	// Move s2 before s1
+	if !lib.MoveSong(1, 0) {
+		t.Fatalf("MoveSong(1, 0) failed")
+	}
+	if lib.Songs[0].ID != s2.ID || lib.Songs[1].ID != s1.ID {
+		t.Errorf("songs not reordered correctly: %+v", lib.Songs)
+	}
+
+	// Playlist reordering
+	pl, _ := lib.CreatePlaylist("My PL")
+	lib.AddToPlaylist(pl.ID, s1.ID)
+	lib.AddToPlaylist(pl.ID, s2.ID)
+
+	plSongs := lib.GetPlaylistSongs(pl.ID)
+	if len(plSongs) != 2 || plSongs[0].ID != s1.ID {
+		t.Fatalf("expected s1 first in playlist, got %+v", plSongs)
+	}
+
+	if !lib.MovePlaylistSong(pl.ID, 1, 0) {
+		t.Fatalf("MovePlaylistSong failed")
+	}
+	plSongsAfter := lib.GetPlaylistSongs(pl.ID)
+	if len(plSongsAfter) != 2 || plSongsAfter[0].ID != s2.ID {
+		t.Fatalf("expected s2 moved to first in playlist, got %+v", plSongsAfter)
+	}
+}
+
 func TestMain(m *testing.M) {
 	// Point dataFile at a temp location so tests don't touch the real library
 	tmpDir, err := os.MkdirTemp("", "music-cli-test-*")

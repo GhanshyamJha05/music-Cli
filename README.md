@@ -135,11 +135,16 @@ go run .
 |-----|--------|
 | `↑`/`↓` or `k`/`j` | Navigate |
 | `Enter` | Play song |
-| `Space` | Play song |
+| `Space` | Play song / Pause |
 | `p` | Pause/Resume |
 | `s` | Stop |
-| `a` | Add to playlist |
-| `d` | Delete song |
+| `Tab` / `>` | Skip to next track immediately |
+| `Shift+Tab` / `<` | Skip to previous track |
+| `K` / `Ctrl+↑` | Move selected song UP (reorder) |
+| `J` / `Ctrl+↓` | Move selected song DOWN (reorder) |
+| `a` | Add to playlist (Library) |
+| `d` / `r` | Remove song |
+| `r` | Loop mode toggle (Library) |
 | `+`/`-` | Volume up/down |
 | `n` | Now Playing |
 | `h` | Back |

@@ -245,6 +245,32 @@ func (a *App) updateLibrary(key string) (tea.Model, tea.Cmd) {
 			a.screen = ScreenNowPlaying
 			return a, a.playFromList(songs, a.libCursor)
 		}
+	case ">", "tab":
+		// Quick skip to next track immediately
+		if len(a.queueSongs) > 0 {
+			return a, a.advanceQueue()
+		}
+	case "<", "shift+tab":
+		// Quick skip to previous track immediately
+		if len(a.queueSongs) > 0 {
+			return a, a.rewindQueue()
+		}
+	case "K", "ctrl+up":
+		// Move song up in order
+		if a.libCursor > 0 && len(songs) > 1 {
+			if a.lib.MoveSong(a.libCursor, a.libCursor-1) {
+				a.libCursor--
+				return a, a.setStatus("Moved up", false)
+			}
+		}
+	case "J", "ctrl+down":
+		// Move song down in order
+		if a.libCursor < len(songs)-1 && len(songs) > 1 {
+			if a.lib.MoveSong(a.libCursor, a.libCursor+1) {
+				a.libCursor++
+				return a, a.setStatus("Moved down", false)
+			}
+		}
 	case "p", " ":
 		a.pl.Pause()
 		if a.pl.IsPaused() {
@@ -428,6 +454,28 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 			a.screen = ScreenNowPlaying
 			return a, a.playFromList(songs, a.playlistDetCursor)
 		}
+	case ">", "tab":
+		if len(a.queueSongs) > 0 {
+			return a, a.advanceQueue()
+		}
+	case "<", "shift+tab":
+		if len(a.queueSongs) > 0 {
+			return a, a.rewindQueue()
+		}
+	case "K", "ctrl+up":
+		if a.playlistDetCursor > 0 && len(songs) > 1 {
+			if a.lib.MovePlaylistSong(a.activePlaylist.ID, a.playlistDetCursor, a.playlistDetCursor-1) {
+				a.playlistDetCursor--
+				return a, a.setStatus("Moved up", false)
+			}
+		}
+	case "J", "ctrl+down":
+		if a.playlistDetCursor < len(songs)-1 && len(songs) > 1 {
+			if a.lib.MovePlaylistSong(a.activePlaylist.ID, a.playlistDetCursor, a.playlistDetCursor+1) {
+				a.playlistDetCursor++
+				return a, a.setStatus("Moved down", false)
+			}
+		}
 	case "p", " ":
 		a.pl.Pause()
 		if a.pl.IsPaused() {
@@ -460,7 +508,7 @@ func (a *App) updatePlaylistDetail(key string) (tea.Model, tea.Cmd) {
 			a.loopMode = LoopOff
 			return a, a.setStatus("Loop: Off", false)
 		}
-	case "r":
+	case "d", "r":
 		if len(songs) > 0 {
 			if _, err := a.lib.RemoveFromPlaylist(a.activePlaylist.ID, songs[a.playlistDetCursor].ID); err != nil {
 				return a, a.setStatus("Remove error: "+err.Error(), true)
@@ -498,9 +546,9 @@ func (a *App) updateNowPlaying(key string) (tea.Model, tea.Cmd) {
 		a.queueSongs = nil
 		a.queueIndex = 0
 		return a, a.setStatus("Stopped", false)
-	case ">":
+	case ">", "tab":
 		return a, a.advanceQueue()
-	case "<":
+	case "<", "shift+tab":
 		return a, a.rewindQueue()
 	case "plus", "=", "+":
 		a.pl.VolumeUp()
@@ -894,6 +942,9 @@ func (a *App) updateOnlineResults(key string) (tea.Model, tea.Cmd) {
 	case "s", "a":
 		if len(a.onlineResults) > 0 && a.onlineCursor < len(a.onlineResults) {
 			t := a.onlineResults[a.onlineCursor]
+			if a.lib.SongExists(t.StreamURL, t.Title, t.Artist) {
+				return a, a.setStatus("Already saved in library: "+t.Title, true)
+			}
 			if _, err := a.lib.AddSong(t.Title, t.Artist, t.Album, "Online / "+t.Source, t.StreamURL, t.Duration); err != nil {
 				return a, a.setStatus("Save error: "+err.Error(), true)
 			}
@@ -952,6 +1003,9 @@ func (a *App) updateRecommended(key string) (tea.Model, tea.Cmd) {
 		case "s", "a":
 			if len(a.recResults) > 0 && a.recResCursor < len(a.recResults) {
 				t := a.recResults[a.recResCursor]
+				if a.lib.SongExists(t.StreamURL, t.Title, t.Artist) {
+					return a, a.setStatus("Already saved in library: "+t.Title, true)
+				}
 				if _, err := a.lib.AddSong(t.Title, t.Artist, t.Album, a.recActiveGenre.Name, t.StreamURL, t.Duration); err != nil {
 					return a, a.setStatus("Save error: "+err.Error(), true)
 				}

@@ -229,6 +229,65 @@ func (l *Library) RemoveFromPlaylist(playlistID, songID string) (bool, error) {
 	return false, nil
 }
 
+// SongExists checks if a song already exists in the library by file path or (title + artist)
+func (l *Library) SongExists(filePath, title, artist string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	normFP := strings.TrimSpace(strings.ToLower(filePath))
+	normTitle := strings.TrimSpace(strings.ToLower(title))
+	normArtist := strings.TrimSpace(strings.ToLower(artist))
+
+	for _, s := range l.Songs {
+		// Exact file path or URL match
+		if normFP != "" && strings.TrimSpace(strings.ToLower(s.FilePath)) == normFP {
+			return true
+		}
+		// Exact title & artist match
+		if normTitle != "" && strings.TrimSpace(strings.ToLower(s.Title)) == normTitle {
+			if normArtist == "" || strings.TrimSpace(strings.ToLower(s.Artist)) == normArtist {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// MoveSong shifts a song's position in the library slice (for reordering).
+func (l *Library) MoveSong(fromIndex, toIndex int) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if fromIndex < 0 || fromIndex >= len(l.Songs) || toIndex < 0 || toIndex >= len(l.Songs) || fromIndex == toIndex {
+		return false
+	}
+	song := l.Songs[fromIndex]
+	l.Songs = append(l.Songs[:fromIndex], l.Songs[fromIndex+1:]...)
+	l.Songs = append(l.Songs[:toIndex], append([]Song{song}, l.Songs[toIndex:]...)...)
+	_ = l.saveLocked()
+	return true
+}
+
+// MovePlaylistSong shifts a song's position inside a playlist.
+func (l *Library) MovePlaylistSong(playlistID string, fromIndex, toIndex int) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for pi, pl := range l.Playlists {
+		if pl.ID == playlistID {
+			if fromIndex < 0 || fromIndex >= len(pl.SongIDs) || toIndex < 0 || toIndex >= len(pl.SongIDs) || fromIndex == toIndex {
+				return false
+			}
+			sid := pl.SongIDs[fromIndex]
+			l.Playlists[pi].SongIDs = append(pl.SongIDs[:fromIndex], pl.SongIDs[fromIndex+1:]...)
+			l.Playlists[pi].SongIDs = append(l.Playlists[pi].SongIDs[:toIndex], append([]string{sid}, l.Playlists[pi].SongIDs[toIndex:]...)...)
+			_ = l.saveLocked()
+			return true
+		}
+	}
+	return false
+}
+
 // GetPlaylistSongs returns the songs belonging to a playlist
 func (l *Library) GetPlaylistSongs(playlistID string) []Song {
 	l.mu.RLock()
@@ -239,14 +298,13 @@ func (l *Library) GetPlaylistSongs(playlistID string) []Song {
 			if len(p.SongIDs) == 0 {
 				return nil
 			}
-			// Build a set of requested IDs, then do a single pass through Songs
-			needed := make(map[string]int, len(p.SongIDs))
-			for i, sid := range p.SongIDs {
-				needed[sid] = i
+			songMap := make(map[string]Song, len(l.Songs))
+			for _, s := range l.Songs {
+				songMap[s.ID] = s
 			}
 			result := make([]Song, 0, len(p.SongIDs))
-			for _, s := range l.Songs {
-				if _, ok := needed[s.ID]; ok {
+			for _, sid := range p.SongIDs {
+				if s, ok := songMap[sid]; ok {
 					result = append(result, s)
 				}
 			}
