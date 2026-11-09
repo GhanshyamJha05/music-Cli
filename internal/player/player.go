@@ -134,10 +134,24 @@ func (p *Player) playLocked(filePath string) error {
 
 	// speaker.Init must be called exactly once. Initialize with the first
 	// track's sample rate; do not re-initialize when switching tracks.
+	var initErr error
 	speakerOnce.Do(func() {
-		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+		defer func() {
+			if r := recover(); r != nil {
+				initErr = fmt.Errorf("audio device initialization error: %v", r)
+			}
+		}()
+		err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+		if err != nil {
+			initErr = fmt.Errorf("failed to initialize audio output: %w", err)
+			return
+		}
 		speakerRate = format.SampleRate
 	})
+	if initErr != nil {
+		f.Close()
+		return initErr
+	}
 	p.currentRate = format.SampleRate
 
 	p.ctrl = &beep.Ctrl{Streamer: streamer, Paused: false}

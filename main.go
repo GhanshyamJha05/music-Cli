@@ -13,13 +13,17 @@ import (
 )
 
 func init() {
+	// Look in the application's executable directory so portable yt-dlp / ffmpeg
+	// placed next to the binary are discovered automatically on any OS.
+	var extraPaths []string
+	if exePath, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exePath)
+		extraPaths = append(extraPaths, exeDir)
+	}
+
 	// On Windows, ensure Winget package and local tool paths are added to PATH
 	// so users don't get "missing dependencies" if launched from a stale shell.
 	if runtime.GOOS == "windows" {
-		currentPath := os.Getenv("PATH")
-		var extraPaths []string
-
-		// Check User environment PATH from registry
 		if userPath := os.Getenv("USERPROFILE"); userPath != "" {
 			wingetDir := filepath.Join(userPath, "AppData", "Local", "Microsoft", "WinGet", "Packages")
 			if entries, err := os.ReadDir(wingetDir); err == nil {
@@ -47,10 +51,12 @@ func init() {
 				}
 			}
 		}
+	}
 
-		if len(extraPaths) > 0 {
-			os.Setenv("PATH", currentPath+";"+strings.Join(extraPaths, ";"))
-		}
+	if len(extraPaths) > 0 {
+		currentPath := os.Getenv("PATH")
+		sep := string(os.PathListSeparator)
+		os.Setenv("PATH", currentPath+sep+strings.Join(extraPaths, sep))
 	}
 }
 

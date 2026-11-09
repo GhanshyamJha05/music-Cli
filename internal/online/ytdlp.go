@@ -212,7 +212,7 @@ func YtdlpDownloadTemp(webpageURL string) (string, error) {
 	return "", fmt.Errorf("yt-dlp download failed after %d retries: %w", maxRetries, lastErr)
 }
 
-// CleanCache removes cached files older than 7 days.
+// CleanCache removes cached files older than 7 days, or trims total cache size if it exceeds 500 MB.
 // It respects the provided context for cancellation/timeout.
 // Skips files that are locked or permission-denied (common on Windows).
 func CleanCache(ctx context.Context) {
@@ -222,7 +222,17 @@ func CleanCache(ctx context.Context) {
 	if err != nil {
 		return // dir doesn't exist or can't be read — nothing to do
 	}
+
+	type fileEntry struct {
+		path    string
+		size    int64
+		modTime time.Time
+	}
+
+	var files []fileEntry
+	var totalSize int64
 	cutoff := time.Now().Add(-7 * 24 * time.Hour)
+
 	for _, e := range entries {
 		select {
 		case <-ctx.Done():
@@ -236,12 +246,40 @@ func CleanCache(ctx context.Context) {
 		if err != nil {
 			continue // can't stat — skip
 		}
+		path := filepath.Join(cacheDir, e.Name())
 		if info.ModTime().Before(cutoff) {
-			path := filepath.Join(cacheDir, e.Name())
-			// Retry once after a short delay (handles Windows file locks)
+			// Older than 7 days, remove immediately
 			if err := os.Remove(path); err != nil {
 				time.Sleep(100 * time.Millisecond)
-				os.Remove(path) // best-effort second attempt
+				_ = os.Remove(path)
+			}
+		} else {
+			files = append(files, fileEntry{
+				path:    path,
+				size:    info.Size(),
+				modTime: info.ModTime(),
+			})
+			totalSize += info.Size()
+		}
+	}
+
+	// Limit total cache size to 500 MB max. Evict oldest files first if exceeded.
+	const maxCacheBytes int64 = 500 * 1024 * 1024
+	if totalSize > maxCacheBytes {
+		// Sort oldest first
+		for i := 0; i < len(files)-1; i++ {
+			for j := i + 1; j < len(files); j++ {
+				if files[j].modTime.Before(files[i].modTime) {
+					files[i], files[j] = files[j], files[i]
+				}
+			}
+		}
+		for _, f := range files {
+			if totalSize <= maxCacheBytes {
+				break
+			}
+			if err := os.Remove(f.path); err == nil {
+				totalSize -= f.size
 			}
 		}
 	}
