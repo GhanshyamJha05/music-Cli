@@ -7,17 +7,17 @@ import (
 )
 
 var (
-	// Color palette — Cyan / Neon Cyan + dark
-	green     = lipgloss.Color("#00E5FF") // bright electric cyan
-	darkGreen = lipgloss.Color("#00838F") // deep cyan / teal border
+	// Color palette — Warm Vibrant Orange + dark
+	green     = lipgloss.Color("#FF7A00") // vibrant bright orange
+	darkGreen = lipgloss.Color("#A84300") // deep burnt orange / border
 	white     = lipgloss.Color("#FFFFFF")
 	gray      = lipgloss.Color("#B3B3B3")
 	darkGray  = lipgloss.Color("#282828")
 	black     = lipgloss.Color("#121212")
-	accent    = lipgloss.Color("#18FFFF") // vibrant accent cyan
-	yellow    = lipgloss.Color("#F59B23")
+	accent    = lipgloss.Color("#FF9500") // golden warm accent
+	yellow    = lipgloss.Color("#FFB74D")
 	red       = lipgloss.Color("#E8445A")
-	lightBlue = lipgloss.Color("#80D8FF")
+	lightBlue = lipgloss.Color("#FFB74D")
 
 	// Base styles
 	titleStyle = lipgloss.NewStyle().
