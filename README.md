@@ -23,13 +23,27 @@ A terminal-based music player with a clean, modern interface. Manage your local 
 
 ## Installation
 
-### Option 1: Download Binary (Recommended)
+### Option 1: 1-Click Windows Setup (Easiest — All Batteries Included)
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/GhanshyamJha05/music-Cli/releases).
+Download the single installer from [GitHub Releases](https://github.com/GhanshyamJha05/music-Cli/releases):
+
+- **Windows Setup**: **`music-cli-windows-setup.exe`**
+
+Double-click to install. It automatically:
+- Bundles `music.exe`, `yt-dlp.exe`, and `ffmpeg.exe` (no external downloads or Go installation needed).
+- Adds `music` to your system PATH so you can type `music` in PowerShell or CMD.
+- Creates an optional desktop & Start Menu shortcut.
+
+---
+
+### Option 2: Pre-compiled Standalone Binaries
+
+Download directly from [GitHub Releases](https://github.com/GhanshyamJha05/music-Cli/releases):
 
 | Platform | File |
 |----------|------|
-| Windows | `music-Cli-windows.exe` |
+| Windows (Installer) | `music-cli-windows-setup.exe` |
+| Windows (Standalone) | `music-Cli-windows.exe` |
 | macOS | `music-Cli-macos` |
 | Linux | `music-Cli-linux` |
 
