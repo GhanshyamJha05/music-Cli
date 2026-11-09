@@ -35,8 +35,8 @@ Name: "addtopath"; Description: "Add Music CLI to system PATH (allows typing 'mu
 
 [Files]
 Source: "music.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion external; Check: FileExists('yt-dlp.exe')
-Source: "ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion external; Check: FileExists('ffmpeg.exe')
+Source: "yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -82,3 +82,4 @@ end;
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+

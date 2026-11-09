@@ -28,11 +28,14 @@ jobs:
       - name: Download Portable yt-dlp & ffmpeg for bundle
         shell: pwsh
         run: |
+          Write-Host "Downloading yt-dlp..."
           Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "yt-dlp.exe"
-          Invoke-WebRequest -Uri "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip" -OutFile "ffmpeg.zip"
+          Write-Host "Downloading ffmpeg essentials..."
+          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "ffmpeg.zip"
           Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg_extracted"
           $ffmpegExe = Get-ChildItem -Path "ffmpeg_extracted" -Filter "ffmpeg.exe" -Recurse | Select-Object -First 1
           Copy-Item $ffmpegExe.FullName -Destination "ffmpeg.exe"
+          Get-Item music.exe, yt-dlp.exe, ffmpeg.exe | Select-Object Name, Length
 
       - name: Compile Inno Setup Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
