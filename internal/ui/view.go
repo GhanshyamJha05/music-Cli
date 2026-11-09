@@ -262,7 +262,7 @@ func (a *App) viewPlaylistDetail() string {
 	b.WriteString(renderHints([]hint{
 		{"↑/↓", "navigate"}, {"enter", "play"}, {"p", "pause"},
 		{"s", "stop"}, {"+/-", "volume"}, {"tab/>", "skip"},
-		{"K/J", "reorder"}, {"d/r", "remove"}, {"n", "now playing"}, {"esc/h", "back"},
+		{"K/J", "reorder"}, {"r", "loop"}, {"d", "remove"}, {"n", "now playing"}, {"esc/h", "back"},
 	}))
 	return b.String()
 }

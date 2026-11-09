@@ -105,13 +105,17 @@ func (l *Library) Save() error {
 	return l.saveLocked()
 }
 
-// saveLocked writes the library to disk. Caller must hold at least a read lock.
+// saveLocked writes the library to disk atomically. Caller must hold at least a read lock.
 func (l *Library) saveLocked() error {
 	data, err := json.MarshalIndent(l, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dataFile, data, 0644)
+	tmpFile := dataFile + ".tmp"
+	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmpFile, dataFile)
 }
 
 // AddSong adds a song and saves
