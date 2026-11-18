@@ -7,13 +7,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/GhanshyamJha05/music-Cli/internal/library"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
+
+	"github.com/GhanshyamJha05/music-Cli/internal/library"
 )
 
 // OnlineTrack is a normalised result from an online search.
@@ -42,16 +44,35 @@ func TrackToSong(t OnlineTrack) library.Song {
 	}
 }
 
-// YtdlpAvailable checks if yt-dlp is on PATH.
-func YtdlpAvailable() bool {
-	_, err := exec.LookPath("yt-dlp")
-	return err == nil
+// resolveBinaryPath checks if name exists on PATH or in the running executable's directory.
+func resolveBinaryPath(name string) bool {
+	if _, err := exec.LookPath(name); err == nil {
+		return true
+	}
+	if exe, err := os.Executable(); err == nil {
+		dir := filepath.Dir(exe)
+		target := filepath.Join(dir, name)
+		if fi, err := os.Stat(target); err == nil && !fi.IsDir() {
+			return true
+		}
+		if runtime.GOOS == "windows" {
+			targetExe := filepath.Join(dir, name+".exe")
+			if fi, err := os.Stat(targetExe); err == nil && !fi.IsDir() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
-// FfmpegAvailable checks if ffmpeg is on PATH (required for audio extraction).
+// YtdlpAvailable checks if yt-dlp is on PATH or next to the executable.
+func YtdlpAvailable() bool {
+	return resolveBinaryPath("yt-dlp")
+}
+
+// FfmpegAvailable checks if ffmpeg is on PATH or next to the executable (required for audio extraction).
 func FfmpegAvailable() bool {
-	_, err := exec.LookPath("ffmpeg")
-	return err == nil
+	return resolveBinaryPath("ffmpeg")
 }
 
 // CheckDeps returns an error describing missing dependencies.
